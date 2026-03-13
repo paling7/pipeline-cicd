@@ -1,0 +1,81 @@
+name: CI-CD Pipeline
+
+on:
+push:
+branches:
+- main
+- develop
+pull_request:
+branches:
+- main
+- develop
+
+jobs:
+lint:
+runs-on: ubuntu-latest
+steps:
+- name: Récupérer le code
+uses: actions/checkout@v4
+
+- name: Installer Node.js
+uses: actions/setup-node@v4
+with:
+node-version: 20
+
+- name: Installer les dépendances
+run: npm install
+
+- name: Vérifier le lint
+run: npm run lint
+
+build:
+runs-on: ubuntu-latest
+needs: lint
+steps:
+- name: Récupérer le code
+uses: actions/checkout@v4
+
+- name: Installer Node.js
+uses: actions/setup-node@v4
+with:
+node-version: 20
+
+- name: Installer les dépendances
+run: npm install
+
+- name: Build
+run: npm run build
+
+test:
+runs-on: ubuntu-latest
+needs: build
+steps:
+- name: Récupérer le code
+uses: actions/checkout@v4
+
+- name: Installer Node.js
+uses: actions/setup-node@v4
+with:
+node-version: 20
+
+- name: Installer les dépendances
+run: npm install
+
+- name: Exécuter les tests
+run: npm test
+
+deploy_staging:
+runs-on: ubuntu-latest
+needs: test
+if: github.ref == 'refs/heads/main'
+steps:
+- name: Déploiement staging
+run: echo "Déploiement staging exécuté uniquement sur main"
+
+rollback:
+runs-on: ubuntu-latest
+needs: deploy_staging
+if: failure() && github.ref == 'refs/heads/main'
+steps:
+- name: Rollback
+run: echo "Rollback déclenché car le déploiement a échoué"
